@@ -36,10 +36,10 @@ if [ $? -ne 0 ]; then
 fi
 
 # 必要なパッケージをインストールします
-bun install
+bun install --force
 
 # ViteプロジェクトでReactを使用するための @vitejs/plugin-react パッケージをインストール
-bun add @vitejs/plugin-react --dev
+bun add @vitejs/plugin-react@latest --dev
 # vite-plugin-htmlパッケージをインストール
 bun add vite-plugin-html --dev
 # Node.jsの型定義を提供する @types/node パッケージをインストール
@@ -177,19 +177,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: 'index.html',
-      output: {
-        assetFileNames: (assetInfo: PreRenderedAsset) => {
-          // 'names' プロパティが存在し、空でないことを確認
-          if (assetInfo.names && assetInfo.names.length > 0) {
-            // フォントファイルかどうかを判定
-            const isFont = assetInfo.names.some(name => /\.(woff2|woff|ttf)$/.test(name));
-            if (isFont) {
-              return 'assets/fonts/[name][extname]';
-            }
-          }
-          return 'assets/[name][extname]';
-        }
-      }
     }
   }
 });
@@ -197,6 +184,10 @@ EOF
 
 # 他の必要なviteパッケージをインストール
 bun install vite
+bun add vite@latest
+
+# esbuildを明示的にアップデート
+bun add esbuild@latest --dev
 
 # プロジェクト名をindex.htmlに埋め込む処理
 INDEX_HTML="./index.html"
@@ -221,11 +212,14 @@ git push -u origin main
 
 # gh-pagesのパッケージをインストール
 echo "gh-pagesのパッケージをインストール..."
-bun add gh-pages --dev
+bun add gh-pages@latest --dev
+
+# ビルド時にデバッグログを取得する
+bun run build --debug
 
 # デプロイ
 echo "デプロイを実行します..."
-vite deploy
+bun run deploy
 
 # 開発サーバーを起動し、URLを取得
 echo "開発サーバーを起動します..."
