@@ -7,12 +7,22 @@ fi
 
 PROJECT_NAME=$1
 
+# 指定されたプロジェクト名でViteプロジェクトを作成します（React + TypeScriptテンプレート）
+bun create vite "$PROJECT_NAME" --template react-ts
+
+# プロジェクトディレクトリが正しく作成されたか確認します
+if [ ! -d "$PROJECT_NAME" ]; then
+    echo "プロジェクトディレクトリの作成に失敗しました。"
+    exit 1
+fi
+# プロジェクトディレクトリに移動します
+cd "$PROJECT_NAME"
+
 # NVM の使用
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 # node.jsの最安定バージョンをインストールから使用状態に変更します
-# Node.jsの最安定バージョンをインストールと使用
 nvm install --lts
 if [ $? -ne 0 ]; then
     echo "Node.jsのインストールに失敗しました。"
@@ -25,40 +35,20 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 指定されたプロジェクト名でViteプロジェクトを作成します（React + TypeScriptテンプレート）
-bun create vite "$PROJECT_NAME" --template react-ts
-
-# プロジェクトディレクトリが正しく作成されたか確認します
-if [ ! -d "$PROJECT_NAME" ]; then
-    echo "プロジェクトディレクトリの作成に失敗しました。"
-    exit 1
-fi
-
-# プロジェクトディレクトリに移動します
-cd "$PROJECT_NAME"
-
 # 必要なパッケージをインストールします
-rm -rf node_modules bun.lockb
 bun install
+
 # ViteプロジェクトでReactを使用するための @vitejs/plugin-react パッケージをインストール
 bun add @vitejs/plugin-react --dev
 # vite-plugin-htmlパッケージをインストール
 bun add vite-plugin-html --dev
 # Node.jsの型定義を提供する @types/node パッケージをインストール
-bun add @types/node --dev
-
-# 他の必要なviteパッケージをインストール
-bunx vite
+bun add @types/node --de
 
 # Tailwind CSSのインストール
 bun add -D tailwindcss postcss autoprefixer
-
 # Tailwindの設定ファイルを生成
 npx tailwindcss init -p
-
-# デフォルトの不要なファイルを削除します
-rm ./src/assets/react.svg ./public/vite.svg ./src/App.css ./src/main.css ./src/index.css
-
 # tailwind.config.jsファイルの設定
 cat <<EOF >tailwind.config.js
 module.exports = {
@@ -73,13 +63,6 @@ module.exports = {
 }
 EOF
 
-# Tailwind CSSの設定をCSSファイルに追加
-cat <<EOF >./src/css/main.css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-EOF
-
 # package.jsonファイルに内容を書き込みます
 cat <<EOF >package.json
 {
@@ -91,7 +74,7 @@ cat <<EOF >package.json
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
-        "deploy": "vite build && gh-pages -d dist"
+        "deploy": "bun run build && gh-pages -d dist"
     },
     "dependencies": {
         "react": "^18.2.0",
@@ -115,10 +98,17 @@ EOF
 mkdir ./src/css ./src/assets/fonts ./src/assets/images
 touch ./src/css/main.css ./src/pathHelper.ts
 
-# プロジェクトのセットアップが成功したことを通知します
-echo "プロジェクト $PROJECT_NAME が正常にセットアップされました。"
+# デフォルトの不要なファイルを削除します
+rm ./src/assets/react.svg ./public/vite.svg ./src/App.css ./src/main.css ./src/index.css
 
-# App.tsxファイルに内容を書き込みます
+# Tailwind CSSの設定をCSSファイルに追加
+cat <<EOF >./src/css/main.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+EOF
+
+# pathHelper.tsファイルに内容を書き込みます
 cat <<EOF >./src/pathHelper.ts
 export const getImageUrl = (fileName: string, extension: string = "jpg") => {
     return new URL(`./assets/images/${fileName}.${extension}`, import.meta.url)
@@ -130,16 +120,14 @@ EOF
 cat <<EOF >./src/App.tsx
 import React from 'react';
 
-function App() {
+export default function App() {
   return (
     <>
-      <p\$ className="">
+      <p className="">
       </p>
     </>
   );
 }
-
-export default App;
 EOF
 
 # main.tsxファイルに内容を書き込みます
@@ -184,7 +172,7 @@ import { OutputAsset, OutputChunk, PreRenderedAsset } from 'rollup';
 
 // GitHub Pages のリポジトリ名に合わせて設定
 export default defineConfig({
-  base: './',
+  base: '/$PROJECT_NAME/',
   plugins: [react()],
   build: {
     rollupOptions: {
@@ -206,6 +194,9 @@ export default defineConfig({
   }
 });
 EOF
+
+# 他の必要なviteパッケージをインストール
+bun install vite
 
 # プロジェクト名をindex.htmlに埋め込む処理
 INDEX_HTML="./index.html"
@@ -229,6 +220,7 @@ git branch -M main
 git push -u origin main
 
 # gh-pagesのパッケージをインストール
+echo "gh-pagesのパッケージをインストール..."
 bun add gh-pages --dev
 
 # デプロイ
@@ -238,9 +230,9 @@ vite deploy
 # 開発サーバーを起動し、URLを取得
 echo "開発サーバーを起動します..."
 > nohup.out
-nohup vite > nohup.out 2>&1 &
+nohup bun run dev > nohup.out 2>&1 &
 # 少し待機してサーバーが起動するのを待つ
-sleep 2
+sleep 1
 
 
 # URL を取得してブラウザで開く

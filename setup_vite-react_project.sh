@@ -151,23 +151,21 @@ EOF
 
 # main.cssファイルに内容を書き込みます
 cat <<EOF >./src/css/main.css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@charset "utf-8";
 EOF
 
 # App.tsxファイルに内容を書き込みます
 cat <<EOF >./src/App.tsx
 import React from 'react';
 
-function App() {
+export default function App() {
   return (
     <>
+      <p\$ className="">
+      </p>
     </>
   );
 }
-
-export default App;
 EOF
 
 # main.tsxファイルに内容を書き込みます
